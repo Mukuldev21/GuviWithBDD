@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+    <configuration>
+        <!-- Theme and layout -->
+        <theme>standard</theme>
+        <encoding>UTF-8</encoding>
+        <protocol>https</protocol>
+
+        <!-- Report metadata -->
+        <documentTitle>Automation Test Report</documentTitle>
+        <reportName>Execution Summary</reportName>
+        <reportHeadline>Test Execution Dashboard</reportHeadline>
+
+        <!-- Chart and view settings -->
+        <chartVisibilityOnOpen>true</chartVisibilityOnOpen>
+        <testViewChartLocation>top</testViewChartLocation>
+
+        <!-- Custom styles -->
+        <styles>
+            <![CDATA[
+            .report-name {
+            font-size: 24px;
+            color: #3F51B5;
+            font-weight: bold;
+            }
+            .test-status.pass {
+            background-color: #4CAF50;
+            }
+            .test-status.fail {
+            background-color: #F44336;
+            }
+            .test-status.skip {
+            background-color: #FFC107;
+            }
+            ]]>
+        </styles>
+
+        <!-- Optional scripts -->
+        <scripts>
+            <![CDATA[
+            document.addEventListener('DOMContentLoaded', function() {
+            console.log("Extent Report Loaded");
+            });
+            ]]>
+        </scripts>
+    </configuration>
+</extentreports>
