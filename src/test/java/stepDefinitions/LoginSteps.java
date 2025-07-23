@@ -10,6 +10,8 @@ import pages.LandingPage;
 import pages.LoginPage;
 import hooks.StepErrorTracker;
 import hooks.StepTracker;
+import utils.ExtentStepLogger;
+import com.aventstack.extentreports.ExtentTest;
 
 public class LoginSteps {
 
@@ -17,15 +19,18 @@ public class LoginSteps {
     private LandingPage landingPage;
     private LoginPage loginPage;
     private HomePage homePage;
+    private ExtentTest extentTest;
 
     @Given("I am on the Landing page")
     public void i_am_on_the_landing_page() {
         StepTracker.setLastStepText("Given I am on the Landing page");
         try {
             driver = cucumberHooks.getDriver();
+            extentTest = cucumberHooks.getExtentTest();
             String url = cucumberHooks.config.getProperty("url");
             driver.get(url);
             landingPage = new LandingPage(driver);
+            ExtentStepLogger.logStep(extentTest, driver, "Navigated to Landing page");
             Assert.assertTrue(landingPage.isOnLandingPage(), "Not on the landing page or GUVI logo not visible");
         } catch (Exception e) {
             StepErrorTracker.setLastError(e.getMessage());
@@ -38,7 +43,8 @@ public class LoginSteps {
         StepTracker.setLastStepText("And I navigate to the Login page");
         try {
             landingPage.clickLogin();
-            loginPage = new LoginPage(driver);
+            loginPage = new LoginPage(driver, extentTest);
+            ExtentStepLogger.logStep(extentTest, driver, "Navigated to Login page");
         } catch (Exception e) {
             StepErrorTracker.setLastError(e.getMessage());
             throw e;
@@ -86,13 +92,16 @@ public class LoginSteps {
         StepTracker.setLastStepText("Then I should be logged in successfully");
         try {
             homePage = new HomePage(driver);
-            Assert.assertTrue(homePage.isUserLoggedIn(), "User is not logged in or not on homepage");
+            boolean isLoggedIn = homePage.isUserLoggedIn();
+            ExtentStepLogger.logStep(extentTest, driver, "Assertion: User is logged in successfully");
+            Assert.assertTrue(isLoggedIn, "User is not logged in or not on homepage");
         } catch (AssertionError | Exception e) {
             StepErrorTracker.setLastError(e.getMessage());
             throw e;
         }
     }
 
+    /*
     @Then("I should see an error message for invalid credentials")
     public void i_should_see_an_error_message_for_invalid_credentials() {
         StepTracker.setLastStepText("Then I should see an error message for invalid credentials");
@@ -100,7 +109,21 @@ public class LoginSteps {
             boolean emailError = loginPage.waitForEmailErrorDisplayed();
             boolean passwordError = loginPage.waitForPasswordErrorDisplayed();
             boolean noProfileError = loginPage.waitForNoProfileExistsErrorDisplayed();
+            ExtentStepLogger.logStep(extentTest, driver, "Assertion: Error message displayed for invalid credentials");
             Assert.assertTrue(emailError || passwordError || noProfileError, "No error message displayed for invalid credentials");
+        } catch (AssertionError | Exception e) {
+            StepErrorTracker.setLastError(e.getMessage());
+            throw e;
+        }
+    }
+    */
+    @Then("I should see an error message for invalid credentials")
+    public void i_should_see_an_error_message_for_invalid_credentials() {
+        StepTracker.setLastStepText("Then I should see an error message for invalid credentials");
+        try {
+            boolean errorDisplayed = loginPage.isAnyLoginErrorDisplayed();
+            ExtentStepLogger.logStep(extentTest, driver, "Assertion: Error message displayed for invalid credentials");
+            Assert.assertTrue(errorDisplayed, "No error message displayed for invalid credentials");
         } catch (AssertionError | Exception e) {
             StepErrorTracker.setLastError(e.getMessage());
             throw e;
@@ -111,8 +134,9 @@ public class LoginSteps {
     public void i_should_see_validation_errors_for_required_fields() {
         StepTracker.setLastStepText("Then I should see validation errors for required fields");
         try {
-            //Assert.assertTrue(loginPage.waitForEmailErrorDisplayed(), "Email validation error not displayed");
-            Assert.assertTrue(loginPage.waitForPasswordErrorDisplayed(), "Password validation error not displayed");
+            boolean passwordError = loginPage.waitForPasswordErrorDisplayed();
+            ExtentStepLogger.logStep(extentTest, driver, "Assertion: Validation errors for required fields");
+            Assert.assertTrue(passwordError, "Password validation error not displayed");
         } catch (AssertionError | Exception e) {
             StepErrorTracker.setLastError(e.getMessage());
             throw e;

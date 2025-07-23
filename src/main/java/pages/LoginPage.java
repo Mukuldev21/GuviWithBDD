@@ -1,9 +1,11 @@
 package pages;
 
+import com.aventstack.extentreports.ExtentTest;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import utils.ExtentStepLogger;
 import utils.JavaScriptUtil;
 
 public class LoginPage extends BasePage {
@@ -38,28 +40,35 @@ public class LoginPage extends BasePage {
     @FindBy(css = "#emailgroup .invalid-feedback:not(.is-invalid)")
     private WebElement noProfileExistsError;
 
+    private ExtentTest extentTest;
 
     // Constructor
-    public LoginPage(WebDriver driver) {
+    public LoginPage(WebDriver driver, ExtentTest extentTest) {
         super(driver);
+        this.extentTest = extentTest;
     }
+
 
     // Methods to interact with the page
     public void enterEmail(String email) {
         emailInput.clear();
         emailInput.sendKeys(email);
+        ExtentStepLogger.logStep(extentTest, driver, "Entered email: " + email);
     }
 
     public void enterPassword(String password) {
         passwordInput.clear();
         passwordInput.sendKeys(password);
+        ExtentStepLogger.logStep(extentTest, driver, "Entered password");
     }
+
     public void clickLogin() {
         try {
             waitForLoaderToDisappear();
             wait.until(ExpectedConditions.visibilityOf(loginButton));
             wait.until(ExpectedConditions.elementToBeClickable(loginButton));
             JavaScriptUtil.scrollIntoView(driver, loginButton);
+            ExtentStepLogger.logStep(extentTest, driver, "Clicking Login button");
             loginButton.click();
         } catch (Exception e) {
             throw new RuntimeException("Error clicking login button: " + e.getMessage());
@@ -137,5 +146,18 @@ public class LoginPage extends BasePage {
     // Get the "No profile exists" error message text
     public String getNoProfileExistsErrorMessage() {
         return noProfileExistsError.getText().trim();
+    }
+
+    public boolean isAnyLoginErrorDisplayed() {
+        try {
+            wait.until(driver ->
+                (emailErrorMessage.isDisplayed() && !emailErrorMessage.getText().trim().isEmpty()) ||
+                (passwordErrorMessage.isDisplayed() && !passwordErrorMessage.getText().trim().isEmpty()) ||
+                (noProfileExistsError.isDisplayed() && !noProfileExistsError.getText().trim().isEmpty())
+            );
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

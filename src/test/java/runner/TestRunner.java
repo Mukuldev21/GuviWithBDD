@@ -10,7 +10,7 @@ import org.testng.annotations.DataProvider;
         glue = {"stepDefinitions","hooks"},
         plugin = {"pretty", "com.aventstack.extentreports.cucumber.adapter.ExtentCucumberAdapter:"},
         monochrome = true,
-        tags = "@Course" // Use 'and' to combine tags
+        tags = "@smoke" // Use 'and' to combine tags
 )
 public class TestRunner extends AbstractTestNGCucumberTests {
 
