@@ -49,6 +49,7 @@ public class LoginPage extends BasePage {
     }
 
 
+    /*
     // Methods to interact with the page
     public void enterEmail(String email) {
         emailInput.clear();
@@ -110,6 +111,74 @@ public class LoginPage extends BasePage {
             return false;
         }
     }
+    */
+    // ... (imports and class definition remain unchanged)
+
+    public void enterEmail(String email) {
+        emailInput.clear();
+        ExtentStepLogger.logType(extentTest, "Email Input", email);
+        emailInput.sendKeys(email);
+    }
+
+    public void enterPassword(String password) {
+        passwordInput.clear();
+        ExtentStepLogger.logType(extentTest, "Password Input", "********");
+        passwordInput.sendKeys(password);
+    }
+
+    public void clickLogin() {
+        try {
+            waitForLoaderToDisappear();
+            wait.until(ExpectedConditions.visibilityOf(loginButton));
+            ExtentStepLogger.logElementVisibility(extentTest, "Login Button", loginButton.isDisplayed());
+            wait.until(ExpectedConditions.elementToBeClickable(loginButton));
+            ExtentStepLogger.logElementState(extentTest, "Login Button", loginButton.isEnabled());
+            JavaScriptUtil.scrollIntoView(driver, loginButton);
+            ExtentStepLogger.logClick(extentTest, "Login Button");
+            loginButton.click();
+        } catch (Exception e) {
+            throw new RuntimeException("Error clicking login button: " + e.getMessage());
+        }
+    }
+
+    public void setKeepMeLoggedIn(boolean value) {
+        ExtentStepLogger.logElementState(extentTest, "Keep Me Logged In Checkbox", keepMeLoggedInCheckbox.isEnabled());
+        if (keepMeLoggedInCheckbox.isSelected() != value) {
+            ExtentStepLogger.logClick(extentTest, "Keep Me Logged In Checkbox");
+            keepMeLoggedInCheckbox.click();
+        }
+    }
+
+    public void clickForgotPassword() {
+        ExtentStepLogger.logClick(extentTest, "Forgot Password Link");
+        forgotPasswordLink.click();
+    }
+
+    // Wait for email error message to be visible
+    public boolean waitForEmailErrorDisplayed() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(emailErrorMessage));
+            boolean visible = emailErrorMessage.isDisplayed() && !emailErrorMessage.getText().trim().isEmpty();
+            ExtentStepLogger.logElementVisibility(extentTest, "Email Error Message", visible);
+            return visible;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Wait for password error message to be visible
+    public boolean waitForPasswordErrorDisplayed() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(passwordErrorMessage));
+            boolean visible = passwordErrorMessage.isDisplayed() && !passwordErrorMessage.getText().trim().isEmpty();
+            ExtentStepLogger.logElementVisibility(extentTest, "Password Error Message", visible);
+            return visible;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ... (other methods remain unchanged)
 
     public String getEmailErrorMessage() {
         return emailErrorMessage.getText().trim();

@@ -26,31 +26,9 @@ public class cucumberHooks {
     public static Properties config;
     public static ExtentReports extent = ExtentManager.getInstance();
     private static Map<String, ExtentTest> featureTestMap = new ConcurrentHashMap<>();
-    private static ThreadLocal<ExtentTest> featureThread = new ThreadLocal<>();
+    private static ThreadLocal<ExtentTest> scenarioThread = new ThreadLocal<>();
     public static JsonObject validLoginDetailsJson;
     public static JsonObject courseEnrollmentDetailsJson;
-
-    /*
-    @Before
-    public void setUp(Scenario scenario)  {
-        config = ConfigReader.loadProperties("src/test/resources/config/config.properties");
-        stepCounter.set(0);
-
-        try {
-            validLoginDetailsJson = ConfigReader.loadJsonConfig("src/test/resources/testData/ValidLoginDetails.json");
-            courseEnrollmentDetailsJson = ConfigReader.loadJsonConfig("src/test/resources/testData/CourseEnrollmentDetails.json");
-            driver.set(DriverManager.getDriver(config));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to initialize WebDriver or load config",e);
-        }
-        getDriver().manage().window().maximize();
-        getDriver().manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-
-        ExtentTest test = extent.createTest(scenario.getName());
-        scenarioThread.set(test);
-        ScreenshotCleaner.deleteOldScreenshots("test-output/SparkReport/screenshots", 5);
-    }
-    */
 
     @Before
     public void setUp(Scenario scenario)  {
@@ -69,19 +47,27 @@ public class cucumberHooks {
 
         // Extract feature name from scenario
         String featureName = scenario.getUri().toString()
-            .substring(scenario.getUri().toString().lastIndexOf('/') + 1)
-            .replace(".feature", "");
+                .substring(scenario.getUri().toString().lastIndexOf('/') + 1)
+                .replace(".feature", "");
 
-        // Create or get the feature-level test
+        // Create or get the feature-level test (parent)
         ExtentTest featureTest = featureTestMap.computeIfAbsent(featureName, k -> extent.createTest(featureName));
-        featureThread.set(featureTest);
+
+        // Create a scenario node (child) under the feature
+        String highlightedName = "<span style='color:#fff; font-weight:bold;'>" + scenario.getName() + "</span>";
+        ExtentTest scenarioNode = featureTest.createNode(highlightedName);
+        scenarioThread.set(scenarioNode);
 
         ScreenshotCleaner.deleteOldScreenshots("test-output/SparkReport/screenshots", 5);
 
-        // Log scenario start as a step/node
-        featureTest.info("Scenario: " + scenario.getName());
+        // Log scenario tags as badges
+        String tags = scenario.getSourceTagNames().stream()
+                .map(tag -> "<span style='background-color:#E0E0E0; color:#000; padding:2px 5px; border-radius:3px; margin-right:5px;'>" + tag + "</span>")
+                .reduce("", (a, b) -> a + b);
+        scenarioNode.info("<div>Tags: " + tags + "</div>");
     }
 
+    /*
     @AfterStep
     public void addScreenshotToReport(Scenario scenario) {
         try {
@@ -106,28 +92,70 @@ public class cucumberHooks {
         }
 
         String base64Screenshot = captureScreenshotAsBase64();
-        ExtentTest featureTest = featureThread.get();
+        ExtentTest scenarioNode = scenarioThread.get();
 
         if (scenario.isFailed()) {
             String error = StepErrorTracker.getLastError();
-            featureTest.fail(currentStepNumber + ": " + stepInfo,
+            scenarioNode.fail(currentStepNumber + ": " + stepInfo,
                     createScreenCaptureFromBase64String(base64Screenshot).build());
             if (error != null) {
-                featureTest.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
+                scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
             }
         } else {
-            featureTest.pass(currentStepNumber + ": " + stepInfo,
+            scenarioNode.pass(currentStepNumber + ": " + stepInfo,
                     createScreenCaptureFromBase64String(base64Screenshot).build());
+        }
+    }
+    */
+    @AfterStep
+    public void addScreenshotToReport(Scenario scenario) {
+        // Get the feature file name
+        String featureFile = scenario.getUri().toString();
+        boolean isLoginFeature = featureFile.endsWith("Login.feature");
+
+        stepCounter.set(stepCounter.get() + 1);
+        String currentStepNumber = "Step " + stepCounter.get();
+
+        String stepInfo = StepTracker.getLastStepText();
+        if (stepInfo == null || stepInfo.isEmpty()) {
+            stepInfo = "Step execution in progress .... ";
+        }
+
+        ExtentTest scenarioNode = scenarioThread.get();
+
+        if (isLoginFeature) {
+            String base64Screenshot = captureScreenshotAsBase64();
+            if (scenario.isFailed()) {
+                String error = StepErrorTracker.getLastError();
+                scenarioNode.fail(currentStepNumber + ": " + stepInfo,
+                        createScreenCaptureFromBase64String(base64Screenshot).build());
+                if (error != null) {
+                    scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
+                }
+            } else {
+                scenarioNode.pass(currentStepNumber + ": " + stepInfo,
+                        createScreenCaptureFromBase64String(base64Screenshot).build());
+            }
+        } else {
+            if (scenario.isFailed()) {
+                String error = StepErrorTracker.getLastError();
+                scenarioNode.fail(currentStepNumber + ": " + stepInfo);
+                if (error != null) {
+                    scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
+                }
+            } else {
+                scenarioNode.pass(currentStepNumber + ": " + stepInfo);
+            }
         }
     }
 
     @After
     public void tearDown(Scenario scenario) {
-        ExtentTest featureTest = featureThread.get();
+        ExtentTest scenarioNode = scenarioThread.get();
         if (scenario.isFailed()) {
-            featureTest.fail("Scenario failed: " + scenario.getName());
+            scenarioNode.fail("<span style='color:#F44336;'>❌ Scenario failed: " + scenario.getName() + "</span>");
         } else {
-            featureTest.pass("Scenario passed: " + scenario.getName());
+            scenarioNode.pass("<span style='color:#4CAF50;'>✅ Scenario passed: " + scenario.getName() + "</span>");
         }
         WebDriver webDriver = getDriver();
         if (webDriver != null) {
@@ -146,6 +174,6 @@ public class cucumberHooks {
     }
 
     public static ExtentTest getExtentTest() {
-        return featureThread.get();
+        return scenarioThread.get();
     }
 }
