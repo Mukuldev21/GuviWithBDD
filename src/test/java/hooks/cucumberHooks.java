@@ -67,46 +67,7 @@ public class cucumberHooks {
         scenarioNode.info("<div>Tags: " + tags + "</div>");
     }
 
-    /*
-    @AfterStep
-    public void addScreenshotToReport(Scenario scenario) {
-        try {
-            if (getDriver() == null) {
-                DriverManager.getDriver(config);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        new WebDriverWait(getDriver(), Duration.ofSeconds(8)).until(
-                webDriver -> ((JavascriptExecutor) webDriver)
-                        .executeScript("return document.readyState").equals("complete")
-        );
-
-        stepCounter.set(stepCounter.get() + 1);
-        String currentStepNumber = "Step " + stepCounter.get();
-
-        String stepInfo = StepTracker.getLastStepText();
-        if (stepInfo == null || stepInfo.isEmpty()) {
-            stepInfo = "Step execution in progress .... ";
-        }
-
-        String base64Screenshot = captureScreenshotAsBase64();
-        ExtentTest scenarioNode = scenarioThread.get();
-
-        if (scenario.isFailed()) {
-            String error = StepErrorTracker.getLastError();
-            scenarioNode.fail(currentStepNumber + ": " + stepInfo,
-                    createScreenCaptureFromBase64String(base64Screenshot).build());
-            if (error != null) {
-                scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
-            }
-        } else {
-            scenarioNode.pass(currentStepNumber + ": " + stepInfo,
-                    createScreenCaptureFromBase64String(base64Screenshot).build());
-        }
-    }
-    */
+   /*
     @AfterStep
     public void addScreenshotToReport(Scenario scenario) {
         // Get the feature file name
@@ -146,6 +107,55 @@ public class cucumberHooks {
             } else {
                 scenarioNode.pass(currentStepNumber + ": " + stepInfo);
             }
+        }
+    }
+
+    */
+
+    @AfterStep
+    public void addScreenshotToReport(Scenario scenario) {
+        String featureUri = scenario.getUri() != null ? scenario.getUri().toString() : "";
+        // Adjust the path check as per your project structure if needed
+        boolean isFeatureInFeaturesPackage = featureUri.contains("/features/") && featureUri.endsWith(".feature");
+
+        stepCounter.set(stepCounter.get() + 1);
+        String currentStepNumber = "Step " + stepCounter.get();
+
+        String stepInfo = StepTracker.getLastStepText();
+        if (stepInfo == null || stepInfo.isEmpty()) {
+            stepInfo = "Step execution in progress .... ";
+        }
+
+        ExtentTest scenarioNode = scenarioThread.get();
+        if (scenarioNode == null) return;
+
+        try {
+            if (isFeatureInFeaturesPackage && getDriver() != null) {
+                String base64Screenshot = captureScreenshotAsBase64();
+                if (scenario.isFailed()) {
+                    String error = StepErrorTracker.getLastError();
+                    scenarioNode.fail(currentStepNumber + ": " + stepInfo,
+                            createScreenCaptureFromBase64String(base64Screenshot).build());
+                    if (error != null) {
+                        scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
+                    }
+                } else {
+                    scenarioNode.pass(currentStepNumber + ": " + stepInfo,
+                            createScreenCaptureFromBase64String(base64Screenshot).build());
+                }
+            } else {
+                if (scenario.isFailed()) {
+                    String error = StepErrorTracker.getLastError();
+                    scenarioNode.fail(currentStepNumber + ": " + stepInfo);
+                    if (error != null) {
+                        scenarioNode.fail("<br><pre style='color:#ff5252; background:#212121;'>" + error + "</pre>");
+                    }
+                } else {
+                    scenarioNode.pass(currentStepNumber + ": " + stepInfo);
+                }
+            }
+        } catch (Exception e) {
+            scenarioNode.warning("Could not attach screenshot or log step: " + e.getMessage());
         }
     }
 

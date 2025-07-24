@@ -32,6 +32,7 @@ package stepDefinitions;
                ExtentStepLogger.logNavigation(extentTest, url);
                landingPage = new LandingPage(driver);
                ExtentStepLogger.logStep(extentTest, driver, "Navigated to Landing page");
+               ExtentStepLogger.logStep(extentTest, driver, "Hello");
                boolean onLanding = landingPage.isOnLandingPage();
                ExtentStepLogger.logAssertion(extentTest, "Landing page loaded", true, onLanding);
                Assert.assertTrue(onLanding, "Not on the landing page or GUVI logo not visible");

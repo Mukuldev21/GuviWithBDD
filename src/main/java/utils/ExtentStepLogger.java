@@ -10,12 +10,22 @@ package utils;
   public class ExtentStepLogger {
 
       // Generic step log with screenshot
+      /*
       public static void logStep(ExtentTest test, WebDriver driver, String message) {
           try {
               String base64Screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BASE64);
               test.info(message, MediaEntityBuilder.createScreenCaptureFromBase64String(base64Screenshot).build());
           } catch (Exception e) {
               test.info(message + " (screenshot unavailable)");
+          }
+      }
+      */
+      public static void logStep(ExtentTest test, WebDriver driver, String message) {
+          // Screenshot attachment is handled in @AfterStep, so just log the message
+          try {
+              test.info(message);
+          } catch (Exception e) {
+              test.info(message + " (log unavailable)");
           }
       }
 
